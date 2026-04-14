@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
 
 	type Phase = 'idle' | 'waiting' | 'ready' | 'finished';
 
@@ -24,11 +23,6 @@
 	let submitting = $state(false);
 	let submitOk = $state<boolean | null>(null);
 	let submitError = $state('');
-	let mounted = $state(false);
-
-	onMount(() => {
-		mounted = true;
-	});
 
 	function clearTimers() {
 		if (!browser) return;
@@ -154,13 +148,12 @@
 	}
 
 	const canSubmit = $derived(
-		phase === 'finished' && avg != null && !!age && !!student && consent && !submitting
+			phase === 'finished' && avg != null && !!age && !!student && consent && !submitting
 	);
 </script>
 
-{#if browser && mounted}
-	<main>
-		<section class="card">
+<main>
+	<section class="card">
 			<header class="header">
 				<h1>Reaction Time Study</h1>
 				<p class="sub">Academic Project – IIT Kharagpur (Statistical Inference)</p>
@@ -298,9 +291,8 @@
 					</form>
 				</div>
 			{/if}
-		</section>
-	</main>
-{/if}
+	</section>
+</main>
 
 <style>
 	main {
