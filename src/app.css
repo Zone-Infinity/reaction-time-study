@@ -1,0 +1,14 @@
+html,
+body {
+	margin: 0;
+	padding: 0;
+	background: #0b1220;
+	color: white;
+	min-height: 100%;
+}
+
+body {
+	/* Prevent white flash / overscroll background */
+	overflow-x: hidden;
+}
+
