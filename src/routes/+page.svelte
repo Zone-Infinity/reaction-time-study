@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
+
 	type Phase = 'idle' | 'waiting' | 'ready' | 'finished';
 
 	const TRIALS_TOTAL = 3;
@@ -21,8 +24,14 @@
 	let submitting = $state(false);
 	let submitOk = $state<boolean | null>(null);
 	let submitError = $state('');
+	let mounted = $state(false);
+
+	onMount(() => {
+		mounted = true;
+	});
 
 	function clearTimers() {
+		if (!browser) return;
 		if (timeoutId) clearTimeout(timeoutId);
 		timeoutId = null;
 	}
@@ -39,6 +48,7 @@
 	}
 
 	function beginTrial() {
+		if (!browser) return;
 		submitOk = null;
 		submitError = '';
 
@@ -62,6 +72,7 @@
 	}
 
 	function recordReactionAndAdvance() {
+		if (!browser) return;
 		const t = Math.round(performance.now() - greenAt);
 		trials = [...trials, t];
 
@@ -82,6 +93,7 @@
 	}
 
 	function onPadClick() {
+		if (!browser) return;
 		if (phase === 'idle') {
 			startTest();
 			return;
@@ -104,6 +116,7 @@
 	}
 
 	async function submit() {
+		if (!browser) return;
 		if (avg == null) return;
 
 		submitting = true;
@@ -145,147 +158,149 @@
 	);
 </script>
 
-<main>
-	<section class="card">
-		<header class="header">
-			<h1>Reaction Time Study</h1>
-			<p class="sub">Academic Project – IIT Kharagpur (Statistical Inference)</p>
-			<p class="micro">This test takes ~15 seconds.</p>
-		</header>
+{#if browser && mounted}
+	<main>
+		<section class="card">
+			<header class="header">
+				<h1>Reaction Time Study</h1>
+				<p class="sub">Academic Project – IIT Kharagpur (Statistical Inference)</p>
+				<p class="micro">This test takes ~15 seconds.</p>
+			</header>
 
-		{#if phase !== 'finished'}
-			<div class="meta">
-				<div class="pill">Trial {trialIndex + 1} / {TRIALS_TOTAL}</div>
-				{#if trials.length > 0}
-					<div class="pill">Recorded: {trials.join(', ')} ms</div>
-				{/if}
-			</div>
-
-			<div
-				class="pad"
-				role="button"
-				tabindex="0"
-				aria-label="Reaction test area"
-				data-state={phase === 'ready' ? 'green' : 'red'}
-				onclick={onPadClick}
-				onkeydown={(e) => e.key === 'Enter' && onPadClick()}
-			>
-				{#if phase === 'idle'}
-					<div class="padText">
-						<div class="big">Click anywhere to start</div>
-						<div class="small">Then click as soon as it turns green (3 trials).</div>
-					</div>
-				{:else if phase === 'waiting'}
-					<div class="padText">
-						{#if tooSoon}
-							<div class="big">Too soon!</div>
-							<div class="small">Retrying the same trial…</div>
-						{:else}
-							<div class="big">Wait…</div>
-							<div class="small">Don’t click until it turns green.</div>
-						{/if}
-					</div>
-				{:else if phase === 'ready'}
-					<div class="padText">
-						<div class="big">CLICK!</div>
-						<div class="small">Now</div>
-					</div>
-				{/if}
-			</div>
-		{:else}
-			<div class="results">
-				<h2 class="sectionTitle">Your Results</h2>
-
-				<div class="resultGrid">
-					<div class="result">
-						<div class="k">T1</div>
-						<div class="v">{trials[0]} ms</div>
-					</div>
-					<div class="result">
-						<div class="k">T2</div>
-						<div class="v">{trials[1]} ms</div>
-					</div>
-					<div class="result">
-						<div class="k">T3</div>
-						<div class="v">{trials[2]} ms</div>
-					</div>
+			{#if phase !== 'finished'}
+				<div class="meta">
+					<div class="pill">Trial {trialIndex + 1} / {TRIALS_TOTAL}</div>
+					{#if trials.length > 0}
+						<div class="pill">Recorded: {trials.join(', ')} ms</div>
+					{/if}
 				</div>
 
-				<div class="avgCard" aria-label="Average reaction time">
-					<div class="k">Average</div>
-					<div class="avgValue">{avg} ms</div>
-					<div class="hint">Average human reaction time ≈ 250 ms</div>
+				<div
+					class="pad"
+					role="button"
+					tabindex="0"
+					aria-label="Reaction test area"
+					data-state={phase === 'ready' ? 'green' : 'red'}
+					onclick={onPadClick}
+					onkeydown={(e) => e.key === 'Enter' && onPadClick()}
+				>
+					{#if phase === 'idle'}
+						<div class="padText">
+							<div class="big">Click anywhere to start</div>
+							<div class="small">Then click as soon as it turns green (3 trials).</div>
+						</div>
+					{:else if phase === 'waiting'}
+						<div class="padText">
+							{#if tooSoon}
+								<div class="big">Too soon!</div>
+								<div class="small">Retrying the same trial…</div>
+							{:else}
+								<div class="big">Wait…</div>
+								<div class="small">Don’t click until it turns green.</div>
+							{/if}
+						</div>
+					{:else if phase === 'ready'}
+						<div class="padText">
+							<div class="big">CLICK!</div>
+							<div class="small">Now</div>
+						</div>
+					{/if}
 				</div>
+			{:else}
+				<div class="results">
+					<h2 class="sectionTitle">Your Results</h2>
 
-				<form class="form" onsubmit={(e) => (e.preventDefault(), canSubmit && submit())}>
-					<div class="formSection">
-						<div class="sectionTitleSm">About you</div>
-						<div class="fields2">
-							<label class="field">
-								<span>Age group</span>
-								<select bind:value={age}>
-									<option value="" disabled selected>Select…</option>
-									<option value="18–20">18–20</option>
-									<option value="20–22">20–22</option>
-									<option value="22+">22+</option>
-								</select>
-							</label>
-
-							<label class="field">
-								<span>Student</span>
-								<select bind:value={student}>
-									<option value="" disabled selected>Select…</option>
-									<option value="Yes">Yes</option>
-									<option value="No">No</option>
-								</select>
-							</label>
+					<div class="resultGrid">
+						<div class="result">
+							<div class="k">T1</div>
+							<div class="v">{trials[0]} ms</div>
+						</div>
+						<div class="result">
+							<div class="k">T2</div>
+							<div class="v">{trials[1]} ms</div>
+						</div>
+						<div class="result">
+							<div class="k">T3</div>
+							<div class="v">{trials[2]} ms</div>
 						</div>
 					</div>
 
-					<div class="formSection">
-						<div class="sectionTitleSm">Consent</div>
-						<label class="consent">
-							<input type="checkbox" bind:checked={consent} />
-							<span>I consent to submit my anonymized data for this academic study.</span>
-						</label>
+					<div class="avgCard" aria-label="Average reaction time">
+						<div class="k">Average</div>
+						<div class="avgValue">{avg} ms</div>
+						<div class="hint">Average human reaction time ≈ 250 ms</div>
 					</div>
 
-					<div class="actions">
-						<button class="btn primary" type="submit" disabled={!canSubmit || submitOk === true}>
-							{#if submitting}
-								<span class="spinner" aria-hidden="true"></span>
-								<span>Submitting…</span>
-							{:else}
-								<span>{submitOk === true ? 'Submitted' : 'Submit'}</span>
-							{/if}
-						</button>
-						<button
-							class="btn ghost"
-							type="button"
-							disabled={submitting}
-							onclick={() => {
-								age = '';
-								student = '';
-								consent = false;
-								submitOk = null;
-								submitError = '';
-								resetTest();
-							}}
-						>
-							Restart
-						</button>
-					</div>
+					<form class="form" onsubmit={(e) => (e.preventDefault(), canSubmit && submit())}>
+						<div class="formSection">
+							<div class="sectionTitleSm">About you</div>
+							<div class="fields2">
+								<label class="field">
+									<span>Age group</span>
+									<select bind:value={age}>
+										<option value="" disabled selected>Select…</option>
+										<option value="18–20">18–20</option>
+										<option value="20–22">20–22</option>
+										<option value="22+">22+</option>
+									</select>
+								</label>
 
-					{#if submitOk === true}
-						<p class="status ok">✅ Response recorded. Thank you!</p>
-					{:else if submitOk === false}
-						<p class="status err">Error: {submitError}</p>
-					{/if}
-				</form>
-			</div>
-		{/if}
-	</section>
-</main>
+								<label class="field">
+									<span>Student</span>
+									<select bind:value={student}>
+										<option value="" disabled selected>Select…</option>
+										<option value="Yes">Yes</option>
+										<option value="No">No</option>
+									</select>
+								</label>
+							</div>
+						</div>
+
+						<div class="formSection">
+							<div class="sectionTitleSm">Consent</div>
+							<label class="consent">
+								<input type="checkbox" bind:checked={consent} />
+								<span>I consent to submit my anonymized data for this academic study.</span>
+							</label>
+						</div>
+
+						<div class="actions">
+							<button class="btn primary" type="submit" disabled={!canSubmit || submitOk === true}>
+								{#if submitting}
+									<span class="spinner" aria-hidden="true"></span>
+									<span>Submitting…</span>
+								{:else}
+									<span>{submitOk === true ? 'Submitted' : 'Submit'}</span>
+								{/if}
+							</button>
+							<button
+								class="btn ghost"
+								type="button"
+								disabled={submitting}
+								onclick={() => {
+									age = '';
+									student = '';
+									consent = false;
+									submitOk = null;
+									submitError = '';
+									resetTest();
+								}}
+							>
+								Restart
+							</button>
+						</div>
+
+						{#if submitOk === true}
+							<p class="status ok">✅ Response recorded. Thank you!</p>
+						{:else if submitOk === false}
+							<p class="status err">Error: {submitError}</p>
+						{/if}
+					</form>
+				</div>
+			{/if}
+		</section>
+	</main>
+{/if}
 
 <style>
 	main {
