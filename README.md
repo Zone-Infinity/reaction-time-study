@@ -18,7 +18,6 @@ The application measures human reaction time across **three trials** and collect
 ## Tech stack
 
 - SvelteKit (frontend + server)
-- SheetDB (data storage)
 - Vercel (deployment)
 
 ## How it works
@@ -27,7 +26,7 @@ The application measures human reaction time across **three trials** and collect
 2. Waits for green signal
 3. Clicks as fast as possible
 4. Repeats for 3 trials
-5. Data is submitted anonymously
+5. (Currently paused) Data submission is disabled
 
 ## Run locally
 
@@ -36,13 +35,11 @@ npm install
 npm run dev
 ```
 
-## Env
+## Data collection
 
-Create `.env`:
+Data collection/submission is currently **paused** (no database / SheetDB writes).
 
-```sh
-SHEETDB_URL=your_sheetdb_api_url
-```
+If you want to re-enable data collection, use [this](https://github.com/Zone-Infinity/reaction-time-study/tree/83cfbd10622fc908bdcd2d999567becbea0f387d) reference version of the project (includes the original SheetDB submission flow):
 
 ## Disclaimer
 
